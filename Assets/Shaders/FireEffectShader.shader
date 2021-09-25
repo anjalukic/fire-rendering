@@ -4,7 +4,7 @@ Shader "Custom/FireEffectShader"
 	Properties
 	{
 		[Header(Textures)]
-		_FireTex("Fire Texture", 2D) = "white"
+		_FireTex("Fire Texture", 2D) = "white" { }
 		_NoiseTex("Noise Texture", 2D) = "white" { }
 		_AlphaTex("Alpha Texture", 2D) = "white" { }
 		_HeatAlphaTex("Heat Alpha Texture", 2D) = "white" { }
@@ -26,7 +26,7 @@ Shader "Custom/FireEffectShader"
 	}
 		SubShader
 		{
-			Tags { "RenderType" = "Transparent" "Queue" = "Transparent" }
+			Tags { "RenderType" = "Transparent" "Queue" = "Transparent"}
 			// Grab the screen behind the object into _BackgroundTexture
 			GrabPass { "_BackgroundTex" }
 			LOD 100
@@ -115,6 +115,9 @@ Shader "Custom/FireEffectShader"
 					float4 heatNoise = tex2D(_HeatNoiseTex, input.heatCoords);
 					float heatStrength = tex2D(_HeatAlphaTex, input.tex).r;
 					float4 backgroundColor = tex2D(_BackgroundTex, input.backgroundCoords - heatNoise.xy * heatStrength * saturate(_heatStrength) * 0.03);
+					// render the background and the heat only if billboarding is on
+					// if this isn't done, it won't be possible to make a 3D fire with multiple quad gameObjects
+					//backgroundColor =  lerp( float4(0, 0, 0, 0), backgroundColor, _Billboard);
 
 
 					// Sample the same noise texture using the three different texture coordinates to get three different noise scales.
@@ -157,7 +160,7 @@ Shader "Custom/FireEffectShader"
 					float alpha = alphaColor * saturate(_Transparency);
 
 					// Calculate the final color
-					float4 color = fireColor * alpha + backgroundColor * (1 - alpha);
+					float4 color = lerp(float4(fireColor.rgb, alpha), float4((fireColor * alpha + backgroundColor * (1 - alpha)).rgb, 1), _Billboard);
 
 					return color;
 				 }
